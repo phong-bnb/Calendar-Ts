@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Calendar, Badge, Modal } from "rsuite";
+import { Calendar, Modal } from "rsuite";
 import "rsuite/dist/rsuite.min.css"; // Style cho RSuite
 import { useSelector, useDispatch } from "react-redux";
 import { RootState } from "../store";
@@ -8,7 +8,14 @@ import TaskModal from "./TaskModal";
 
 const HomePage: React.FC = () => {
   const dispatch = useDispatch();
-  const tasks = useSelector((state: RootState) => state.calendar.tasks);
+  const tasks = useSelector((state: RootState) => state.calendar.tasks) as Array<{
+    title: string;
+    content: string;
+    user: string;
+    status: string;
+    assigner: string;
+    date: string;
+  }>;
 
   // State để kiểm soát modal
   const [modalVisible, setModalVisible] = useState(false);
@@ -45,7 +52,7 @@ const HomePage: React.FC = () => {
     setSelectedDay(null);
   };
 
-  // Render badge nếu ngày có công việc
+  // Render badge và thông tin công việc nếu ngày có công việc
   const renderCell = (date: Date) => {
     // Lọc các công việc theo ngày đã chọn
     const tasksForDate = tasks.filter((task) => {
@@ -53,13 +60,15 @@ const HomePage: React.FC = () => {
       return taskDate.toDateString() === date.toDateString();
     });
 
+    // Nếu có công việc cho ngày đã chọn, hiển thị thông tin
     if (tasksForDate.length > 0) {
       return (
-        <div className="absolute top-0 right-0 p-1">
-          <Badge
-            content={tasksForDate.length}
-            className="bg-red-500 text-white"
-          />
+        <div className="absolute top-0 right-0 p-1 text-sm">
+          {tasksForDate.map((task, index) => (
+            <div key={index} className="text-black">
+              {task.assigner}: {task.title}
+            </div>
+          ))}
         </div>
       );
     }
@@ -74,7 +83,11 @@ const HomePage: React.FC = () => {
       </div>
 
       {/* Modal để thêm công việc */}
-      <Modal open={modalVisible} onClose={resetForm} style={{ width: 300 }}>
+      <Modal
+        open={modalVisible}
+        onClose={resetForm}
+        className="fixed inset-0 flex justify-center items-center"
+      >
         <Modal.Header>
           <Modal.Title className="gap-6 flex">
             Ngày {selectedDay?.toLocaleDateString()}

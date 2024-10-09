@@ -1,22 +1,33 @@
-import { Button, Form, Input } from "antd";
-import React from "react";
+import { Button, Form, Input, Select } from "antd";
+import React, { useState, useEffect } from "react";
 
 type FieldType = {
-  title: string; // Thay đổi title từ optional sang required
-  content: string;
-  user: string;
+  content?: string;
+  title?: string;
+  user?: string;
 };
 
-interface TaskModalProps {
-  onSave: (values: FieldType) => void; // Chấp nhận onSave với kiểu values là FieldType
-}
+const { Option } = Select;
 
-const TaskModal: React.FC<TaskModalProps> = ({ onSave }) => {
-  const [form] = Form.useForm(); // Sử dụng form từ Ant Design
+const TaskModal: React.FC<{ onSave: (task: FieldType) => void }> = ({
+  onSave,
+}) => {
+  const [employees, setEmployees] = useState<string[]>([]); // State để lưu danh sách nhân viên
+
+  // Giả lập fetch danh sách nhân viên (có thể thay thế bằng API)
+  useEffect(() => {
+    // Giả lập danh sách nhân viên
+    const employeeList = [
+      "Đức Anh",
+      "Lưu Bính",
+      "Nam An",
+      "Phạm Sơn",
+    ];
+    setEmployees(employeeList);
+  }, []);
 
   const handleFinish = (values: FieldType) => {
-    console.log("Success:", values);
-    onSave(values); // Gọi onSave với giá trị từ form
+    onSave(values); // Gọi hàm onSave với các giá trị form
   };
 
   const handleFinishFailed = (errorInfo: any) => {
@@ -25,41 +36,48 @@ const TaskModal: React.FC<TaskModalProps> = ({ onSave }) => {
 
   return (
     <Form
-      form={form} // Kết nối form với Ant Design
       name="basic"
       labelCol={{ span: 8 }}
       wrapperCol={{ span: 16 }}
-      onFinish={handleFinish}
-      onFinishFailed={handleFinishFailed}
+      style={{ maxWidth: 600 }}
+      initialValues={{ remember: true }}
+      onFinish={handleFinish} // Sử dụng handleFinish
+      onFinishFailed={handleFinishFailed} // Hàm xử lý lỗi
       autoComplete="off"
     >
       <Form.Item<FieldType>
-        label="Title" // Đổi từ Username sang Title
-        name="title" // Cập nhật name
-        rules={[{ required: true, message: "Please input your title!" }]} // Thêm quy tắc
-      >
-        <Input />
-      </Form.Item>
-
-      <Form.Item<FieldType>
-        label="Content" // Đổi từ Password sang Content
-        name="content" // Cập nhật name
-        rules={[{ required: true, message: "Please input your content!" }]} // Thêm quy tắc
-      >
-        <Input.TextArea /> // Sử dụng TextArea cho nội dung
-      </Form.Item>
-
-      <Form.Item<FieldType>
-        label="User" // Thêm trường User
+        label="Nhân Viên"
         name="user"
-        rules={[{ required: true, message: "Please input your username!" }]}
+        rules={[{ required: true, message: "Vui lòng chọn nhân viên!" }]}
+      >
+        <Select placeholder="Chọn nhân viên">
+          {employees.map((employee, index) => (
+            <Option key={index} value={employee}>
+              {employee}
+            </Option>
+          ))}
+        </Select>
+      </Form.Item>
+
+      <Form.Item<FieldType>
+        label="Công Việc"
+        name="title"
+        rules={[{ required: true, message: "Vui lòng nhập công việc!" }]}
       >
         <Input />
+      </Form.Item>
+
+      <Form.Item<FieldType>
+        label="Nội dung"
+        name="content"
+        rules={[{ required: true, message: "Vui lòng nhập nội dung!" }]}
+      >
+        <Input.TextArea />
       </Form.Item>
 
       <Form.Item wrapperCol={{ offset: 8, span: 16 }}>
         <Button type="primary" htmlType="submit">
-          Submit
+          Gửi
         </Button>
       </Form.Item>
     </Form>
