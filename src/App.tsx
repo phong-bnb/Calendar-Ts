@@ -1,3 +1,13 @@
+import LoginPage from "./components/LoginPage";
+import HomePage from "./components/HomePage";
+import { Route, BrowserRouter as Router, Routes } from "react-router-dom";
 export default function App() {
-  return <h1 className="text-3xl font-bold text-green-400">Hello world!</h1>;
+  return (
+    <Router>
+      <Routes>
+        <Route path="/home" element={<HomePage />} />
+        <Route path="/" element={<LoginPage />} />
+      </Routes>
+    </Router>
+  );
 }
