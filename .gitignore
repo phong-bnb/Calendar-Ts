@@ -22,3 +22,6 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+# Ẩn file cụ thể
+store.ts
+app.tsx
