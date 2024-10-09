@@ -1,96 +1,87 @@
-import React from "react";
-import { Calendar, Whisper, Popover, Badge } from "rsuite";
-import "rsuite/styles/index.less"; // or 'rsuite/dist/rsuite.min.css'
-import "rsuite/Calendar/styles/index.css";
+import React, { useState } from "react";
+import { Calendar, Badge, Modal } from "rsuite";
+import "rsuite/dist/rsuite.min.css"; // Style cho RSuite
+import { useSelector, useDispatch } from "react-redux";
+import { RootState } from "../store";
+import { setTasksForDay } from "../store";
+import TaskModal from "./TaskModal";
 
-// Định nghĩa kiểu cho các mục trong danh sách công việc
-interface TodoItem {
-  time: string;
-  title: string;
-}
-
-// Định nghĩa kiểu trả về của hàm getTodoList
-function getTodoList(date: Date): TodoItem[] {
-  const day = date.getDate();
-
-  switch (day) {
-    case 10:
-      return [
-        { time: "10:30 am", title: "Meeting" },
-        { time: "12:00 pm", title: "Lunch" },
-      ];
-    case 15:
-      return [
-        { time: "09:30 pm", title: "Products Introduction Meeting" },
-        { time: "12:30 pm", title: "Client entertaining" },
-        { time: "02:00 pm", title: "Product design discussion" },
-        { time: "05:00 pm", title: "Product test and acceptance" },
-        { time: "06:30 pm", title: "Reporting" },
-        { time: "10:00 pm", title: "Going home to walk the dog" },
-      ];
-    default:
-      return [];
-  }
-}
-
-// Định nghĩa kiểu cho tham số date của hàm renderCell
 const HomePage: React.FC = () => {
-  function renderCell(date: Date) {
-    const list = getTodoList(date);
-    const displayList = list.filter((item, index) => index < 2);
+  const dispatch = useDispatch();
+  const tasks = useSelector((state: RootState) => state.calendar.tasks);
 
-    if (list.length) {
-      const moreCount = list.length - displayList.length;
-      const moreItem = (
-        <li>
-          <Whisper
-            placement="top"
-            trigger="click"
-            speaker={
-              <Popover>
-                {list.map((item, index) => (
-                  <p key={index}>
-                    <b>{item.time}</b> - {item.title}
-                  </p>
-                ))}
-              </Popover>
-            }
-          >
-            <a className="text-blue-500 underline cursor-pointer">
-              {moreCount} more
-            </a>
-          </Whisper>
-        </li>
-      );
+  // State để kiểm soát modal
+  const [modalVisible, setModalVisible] = useState(false);
+  const [selectedDay, setSelectedDay] = useState<Date | null>(null);
 
+  // Giả lập thêm công việc khi chọn ngày (sau này có thể thêm logic thêm/sửa/xóa)
+  const handleSelectDay = (date: Date) => {
+    setSelectedDay(date);
+    setModalVisible(true); // Mở modal khi chọn ngày
+  };
+
+  // Handle lưu công việc
+  const handleSaveTask = (newTask: {
+    title: string;
+    content: string;
+    user: string;
+  }) => {
+    if (selectedDay) {
+      const taskWithDate = {
+        ...newTask,
+        status: "open", // Mặc định trạng thái là open
+        assigner: newTask.user, // Gán user từ input
+        date: selectedDay.toISOString(), // Lưu ngày vào task
+      };
+
+      dispatch(setTasksForDay([...tasks, taskWithDate])); // Thêm công việc mới vào state
+      resetForm(); // Reset form
+    }
+  };
+
+  // Reset form và đóng modal
+  const resetForm = () => {
+    setModalVisible(false);
+    setSelectedDay(null);
+  };
+
+  // Render badge nếu ngày có công việc
+  const renderCell = (date: Date) => {
+    // Lọc các công việc theo ngày đã chọn
+    const tasksForDate = tasks.filter((task) => {
+      const taskDate = new Date(task.date); // Đảm bảo rằng task có thuộc tính date
+      return taskDate.toDateString() === date.toDateString();
+    });
+
+    if (tasksForDate.length > 0) {
       return (
-        <ul className="calendar-todo-list space-y-1 text-sm">
-          {displayList.map((item, index) => (
-            <li key={index} className="flex items-center gap-2">
-              <Badge /> <b>{item.time}</b> - {item.title}
-            </li>
-          ))}
-          {moreCount ? moreItem : null}
-        </ul>
+        <div className="absolute top-0 right-0 p-1">
+          <Badge
+            content={tasksForDate.length}
+            className="bg-red-500 text-white"
+          />
+        </div>
       );
     }
-
     return null;
-  }
+  };
 
   return (
-    <div className="h-screen w-full p-4 bg-white rounded shadow-lg overflow-auto">
-      <Calendar
-        bordered
-        renderCell={renderCell}
-        className="w-full border-collapse text-center"
-        cellRender={(date: Date) => (
-          <div className="border p-2 h-20 text-sm flex items-start justify-start">
-            {date.getDate()}
-            {renderCell(date)}
-          </div>
-        )}
-      />
+    <div className="flex justify-center items-center h-screen bg-gray-100">
+      <div className="bg-white p-8 rounded-lg shadow-lg">
+        <h1 className="text-2xl font-bold mb-4">Lịch công việc</h1>
+        <Calendar bordered renderCell={renderCell} onSelect={handleSelectDay} />
+      </div>
+
+      {/* Modal để thêm công việc */}
+      <Modal open={modalVisible} onClose={resetForm} style={{ width: 300 }}>
+        <Modal.Header>
+          <Modal.Title className="gap-6 flex">
+            Ngày {selectedDay?.toLocaleDateString()}
+          </Modal.Title>
+        </Modal.Header>
+        <TaskModal onSave={handleSaveTask} />
+      </Modal>
     </div>
   );
 };
