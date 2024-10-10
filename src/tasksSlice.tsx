@@ -2,9 +2,14 @@ import { createSlice, PayloadAction } from "@reduxjs/toolkit";
 
 // Định nghĩa kiểu cho các công việc
 interface Task {
-  id: string; // Hoặc kiểu khác mà bạn đang sử dụng cho ID
-  time: string;
+  id: number; // Thêm id vào đây
   title: string;
+  content: string;
+  user: {
+    name: string;
+    color: string;
+  };
+  date: string; // Ngày dưới dạng chuỗi ISO
 }
 
 // Định nghĩa kiểu cho trạng thái
@@ -37,7 +42,7 @@ const tasksSlice = createSlice({
     ) => {
       const { date, taskId, updatedTask } = action.payload;
       const tasks = state.tasks[date];
-      const taskIndex = tasks?.findIndex((task) => task.id === taskId);
+      const taskIndex = tasks?.findIndex((task) => task.id === Number(taskId));
       if (taskIndex !== undefined && taskIndex !== -1) {
         tasks[taskIndex] = { ...tasks[taskIndex], ...updatedTask };
       }
@@ -48,7 +53,7 @@ const tasksSlice = createSlice({
     ) => {
       const { date, taskId } = action.payload;
       state.tasks[date] = state.tasks[date]?.filter(
-        (task) => task.id !== taskId
+        (task) => task.id !== Number(taskId)
       );
     },
   },
