@@ -1,13 +1,8 @@
 import { Button, Form, Input, Select } from "antd";
 import React from "react";
+import { users } from "./user";
 
 const { Option } = Select;
-
-const users = [
-  { name: "John", color: "red" },
-  { name: "Jane", color: "blue" },
-  { name: "Doe", color: "green" },
-];
 
 type FieldType = {
   content: string;

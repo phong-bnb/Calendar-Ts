@@ -3,27 +3,20 @@ import { Calendar, Modal } from "rsuite";
 import "rsuite/dist/rsuite.min.css"; // Style cho RSuite
 import { useSelector, useDispatch } from "react-redux";
 import { RootState, setTasksForDay } from "../../store";
-import TaskModal from "../TaskModal";
-
+import TaskModal from "./TaskModal";
+import { users } from "./user";
 const Calendar_Manager: React.FC = () => {
   const dispatch = useDispatch();
   const tasks = useSelector((state: RootState) => state.calendar.tasks);
 
-  // Danh sách nhân viên
-  const users = [
-    { name: "John", color: "red" },
-    { name: "Jane", color: "blue" },
-    { name: "Doe", color: "green" },
-  ];
-
   const [modalVisible, setModalVisible] = useState(false);
   const [selectedDay, setSelectedDay] = useState<Date | null>(null);
-
+  // handle chọn ngày
   const handleSelectDay = (date: Date) => {
     setSelectedDay(date);
-    setModalVisible(true);
+    setModalVisible(true); // này là mở modal khi click chọn ngày
   };
-
+  // handle lưu công việc
   const handleSaveTask = (newTask: {
     title: string;
     content: string;
@@ -38,7 +31,7 @@ const Calendar_Manager: React.FC = () => {
     }
     setModalVisible(false); // Đóng modal sau khi lưu
   };
-
+  // reset lại form trong cái modal
   const resetForm = () => {
     setModalVisible(false);
     setSelectedDay(null);
@@ -54,7 +47,7 @@ const Calendar_Manager: React.FC = () => {
       <div className="absolute top-0 right-0 p-1">
         {tasksForDate.length > 0 &&
           tasksForDate.map((task) => {
-            const user = users.find((u) => u.name === task.user);
+            const user = users.find((u) => task.user === u.name);
             return (
               <div key={task.title} className="text-black">
                 <span style={{ color: user?.color }}>{user?.name}</span>:{" "}
@@ -65,15 +58,6 @@ const Calendar_Manager: React.FC = () => {
       </div>
     );
   };
-
-//   const renderTask = (task: { title: string; user: string; date: string }) => {
-//     const user = users.find((u) => u.name === task.user);
-//     return (
-//       <div key={task.title}>
-//         <span style={{ color: user?.color }}>{user?.name}</span>: {task.title}
-//       </div>
-//     );
-//   };
 
   return (
     <div className="flex flex-col h-screen bg-gray-100">
@@ -87,21 +71,6 @@ const Calendar_Manager: React.FC = () => {
             renderCell={renderCell}
             onSelect={handleSelectDay}
           />
-
-          {/* {selectedDay && (
-            <div className="mt-4">
-              <h2 className="text-lg font-bold">
-                Công việc cho ngày {selectedDay.toLocaleDateString()}:
-              </h2>
-              {tasks
-                .filter(
-                  (task) =>
-                    new Date(task.date).toDateString() ===
-                    selectedDay.toDateString()
-                )
-                .map(renderTask)}
-            </div>
-          )} */}
         </div>
       </div>
 
