@@ -51,7 +51,7 @@ const Calendar_Manager: React.FC = () => {
     });
 
     return (
-      <div className="absolute top-0 right-0 p-1">
+      <div className=" top-0 right-0 p-1">
         {tasksForDate.length > 0 &&
           tasksForDate.map((task) => {
             const user = users.find((u) => u.name === task.user);
@@ -66,14 +66,14 @@ const Calendar_Manager: React.FC = () => {
     );
   };
 
-//   const renderTask = (task: { title: string; user: string; date: string }) => {
-//     const user = users.find((u) => u.name === task.user);
-//     return (
-//       <div key={task.title}>
-//         <span style={{ color: user?.color }}>{user?.name}</span>: {task.title}
-//       </div>
-//     );
-//   };
+  //   const renderTask = (task: { title: string; user: string; date: string }) => {
+  //     const user = users.find((u) => u.name === task.user);
+  //     return (
+  //       <div key={task.title}>
+  //         <span style={{ color: user?.color }}>{user?.name}</span>: {task.title}
+  //       </div>
+  //     );
+  //   };
 
   return (
     <div className="flex flex-col h-screen bg-gray-100">

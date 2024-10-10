@@ -4,7 +4,7 @@ import Calendar_Manager from "./Manager_Admin/Calendar";
 import Employ_Manager from "./Manager_Admin/Employ_Mananger";
 
 const HomePage: React.FC = () => {
-  const [selectedValue, setSelectedValue] = useState<string>("");
+  const [selectedValue, setSelectedValue] = useState<string>("lich");
 
   const Selectionsadmin = () => {
     return (
@@ -31,7 +31,7 @@ const HomePage: React.FC = () => {
 
   return (
     <div className="mt-4 ">
-      <Selectionsadmin/>
+      <Selectionsadmin />
       {/* Hiển thị Calendar khi chọn "lich" */}
       {selectedValue === "lich" && <Calendar_Manager />}
       {selectedValue === "qlynv" && <Employ_Manager />}
