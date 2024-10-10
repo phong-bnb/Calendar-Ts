@@ -17,7 +17,7 @@ type FieldType = {
 type TaskModalProps = {
   onSave: (task: Omit<Task, "id" | "date">) => void; // Omit để không cần id và date
   onClose: () => void;
-  editingTask?: Task; // Sử dụng kiểu Task
+  editingTask?:  Task | null// Sử dụng kiểu Task
 };
 
 const TaskModal: React.FC<TaskModalProps> = ({
@@ -39,18 +39,12 @@ const TaskModal: React.FC<TaskModalProps> = ({
     }
   }, [editingTask, form]);
 
-  const onFinish = (values: FieldType) => {
-    const { user, ...rest } = values; // Tách user ra
-    onSave({
-      ...rest,
-      user: {
-        name: user.name,
-        color: users.find((u) => u.name === user.name)?.color || "",
-      },
-    });
-    form.resetFields();
-    onClose();
-  };
+ const onFinish = (values: FieldType) => {
+   console.log("Task values submitted:", values); // Log giá trị form
+   onSave(values);
+   form.resetFields();
+   onClose();
+ };
 
   return (
     <Form

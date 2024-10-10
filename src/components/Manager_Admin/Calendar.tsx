@@ -5,6 +5,7 @@ import { useSelector, useDispatch } from "react-redux";
 import { deleteTask, setTasksForDay, RootState } from "../../store";
 import TaskModal from "./TaskModal";
 import { users } from "./user";
+import "./Calendar.css";
 import { Button } from "antd";
 import { Task } from "../../store"; // Import kiểu Task
 
@@ -23,36 +24,45 @@ const Calendar_Manager: React.FC = () => {
   };
 
   const handleSaveTask = (newTask: Omit<Task, "id" | "date">) => {
-    // Omit để không cần id và date ở đây
-    if (selectedDay) {
-      const taskWithDate: Task = {
-        ...newTask,
-        date: selectedDay.toISOString(),
-        id: editingTask ? editingTask.id : Date.now(), // Nếu đang chỉnh sửa, giữ lại id cũ
-      };
+     if (selectedDay) {
 
-      if (editingTask) {
-        const updatedTasks = tasks.map((task) =>
-          task.id === editingTask.id ? taskWithDate : task
-        );
-        dispatch(setTasksForDay(updatedTasks));
-      } else {
-        dispatch(setTasksForDay([...tasks, taskWithDate]));
-      }
-    }
+       const selectedUser = users.find((u) => u.name === newTask.user);
+
+       if (!selectedUser) {
+         console.error("User not found:", newTask.user); // Log ra nếu không tìm thấy user
+         return;
+       }
+
+       const taskWithDate = {
+         ...newTask,
+         user: selectedUser, // Lưu người dùng với cả name và color
+         date: selectedDay.toISOString(),
+       };
+
+       if (editingTask) {
+         const updatedTasks = tasks.map((task) =>
+           task.title === editingTask.title && task.date === editingTask.date
+             ? taskWithDate
+             : task
+         );
+         dispatch(setTasksForDay(updatedTasks));
+       } else {
+         dispatch(setTasksForDay([...tasks, taskWithDate]));
+       }
+     }
     setModalVisible(false);
   };
 
+
   const handleEditTask = (task: Task) => {
-    // Sử dụng kiểu Task
     setEditingTask(task);
     setSelectedDay(new Date(task.date));
     setModalVisible(true);
   };
 
-  const handleDeleteTask = (id: number) => {
-    dispatch(deleteTask(id));
-  };
+ const handleDeleteTask = (date: string, title: string) => {
+   dispatch(deleteTask({ date, title }));
+ };
 
   const renderCell = (date: Date) => {
     const tasksForDate = tasks.filter((task) => {
@@ -61,31 +71,65 @@ const Calendar_Manager: React.FC = () => {
     });
 
     return (
-      <div className="absolute top-0 right-0 p-1">
-        {tasksForDate.length > 0 &&
-          tasksForDate.map((task) => {
-            const user = users.find((u) => task.user.name === u.name);
-            return (
-              <div key={task.id} className="text-black mb-1">
-                <span>{user?.name}</span>: {task.title}
-                <Button
-                  className="w-3"
-                  onClick={() => handleEditTask(task)} // Chỉnh sửa task
+      <div className="relative top-0 right-0 p-1 overflow-hidden border-none">
+        {tasksForDate.length > 0 && (
+          <div
+            className="task-list scroll-container"
+            style={{
+              maxHeight: "80px",
+              overflowY: "auto",
+            }}
+          >
+            {tasksForDate.map((task) => {
+              const userName = task.user?.name || task.user;
+              const user = users.find((u) => u.name === userName);
+              return (
+                <div
+                  key={task.id}
+                  className="text-black mb-1 flex  gap-2 w-full"
                 >
-                  Edit
-                </Button>
-                <Button
-                  className="w-12"
-                  onClick={() => handleDeleteTask(task.id)} // Xóa task theo id
-                >
-                  Delete
-                </Button>
-              </div>
-            );
-          })}
+                  <div className="flex justify-between  w-full">
+                    <div className="flex items-center">
+                      {" "}
+                      <span style={{ color: user?.color }}>{user?.name}</span>:
+                      <span className="truncate max-w-[80%]">
+                        {" "}
+                        {/* Sử dụng truncate để ẩn overflow */}
+                        {task.title.length > 5
+                          ? `${task.title.slice(0, 5)}...` //nếu title quá 5 kí tự thì ẩn và thêm ... đằng sau 
+                          : task.title}
+                      </span>
+                    </div>
+                    <div className="flex gap-2">
+                      <Button
+                        className="w-auto"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleEditTask(task);
+                        }}
+                      >
+                        Edit
+                      </Button>
+                      <Button
+                        className="w-auto"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleDeleteTask(task.date, task.title);
+                        }}
+                      >
+                        Delete
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
       </div>
     );
   };
+
 
   const resetForm = () => {
     setModalVisible(false);
