@@ -2,10 +2,14 @@ import { configureStore, createSlice } from "@reduxjs/toolkit";
 
 // Định nghĩa kiểu công việc
 export interface Task {
+  id: number; // Thêm thuộc tính id
   title: string;
   content: string;
-  user: { name: string; color: string }; // Mỗi nhân viên có màu riêng
-  date: string; // Ngày lưu dưới dạng chuỗi
+  user: {
+    name: string;
+    color: string;
+  };
+  date: string; // Ngày dưới dạng chuỗi ISO
 }
 
 // Định nghĩa trạng thái của lịch
@@ -23,10 +27,25 @@ const calendarSlice = createSlice({
     setTasksForDay: (state, action) => {
       state.tasks = action.payload;
     },
+    editTask: (state, action) => {
+      const { date, title, updatedTask } = action.payload;
+      const taskIndex = state.tasks.findIndex(
+        (task) => task.date === date && task.title === title
+      );
+      if (taskIndex !== -1) {
+        state.tasks[taskIndex] = { ...state.tasks[taskIndex], ...updatedTask };
+      }
+    },
+    deleteTask: (state, action) => {
+      const { date, title } = action.payload;
+      state.tasks = state.tasks.filter(
+        (task) => !(task.date === date && task.title === title)
+      );
+    },
   },
 });
 
-export const { setTasksForDay } = calendarSlice.actions;
+export const { setTasksForDay, editTask, deleteTask } = calendarSlice.actions;
 
 const store = configureStore({
   reducer: {

@@ -1,42 +1,34 @@
 import React, { useState } from "react";
-import { Space, Table, Tag, Modal, Form, Input, Button } from "antd";
+import { Space, Table, Modal, Form, Input, Button } from "antd";
 import type { TableProps } from "antd";
 import { RiEditFill } from "react-icons/ri";
 import { MdDeleteForever } from "react-icons/md";
 
 interface DataType {
   key: string;
-  name: string;
-  age: number;
-  address: string;
-  tags: string[];
+  email: string;
+  password: string;
 }
 
 const initialData: DataType[] = [
   {
     key: "1",
-    name: "Quan Vân Trường",
-    age: 32,
-    address: "Tung Của",
-    tags: ["nice", "developer"],
+    email: "luubinhngu@duonghai.com",
+    password: "123123",
   },
   {
     key: "2",
-    name: "Trương Tam Phong",
-    age: 42,
-    address: "Chai na",
-    tags: ["loser"],
+    email: "ducanhngu@haiduong.vn",
+    password: "123123",
   },
   {
     key: "3",
-    name: "Lý Tiểu Long",
-    age: 32,
-    address: "Hàn Cuốc",
-    tags: ["cool", "teacher"],
+    email: "Namanngu@namdinh.vn",
+    password: "123123",
   },
 ];
 
-const Employ_Manager: React.FC = () => {
+const Account_Manager: React.FC = () => {
   const [data, setData] = useState<DataType[]>(initialData);
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [confirmDeleteVisible, setConfirmDeleteVisible] = useState(false);
@@ -46,40 +38,15 @@ const Employ_Manager: React.FC = () => {
 
   const columns: TableProps<DataType>["columns"] = [
     {
-      title: "Name",
-      dataIndex: "name",
-      key: "name",
+      title: "Email",
+      dataIndex: "email",
+      key: "email",
       render: (text) => <a>{text}</a>,
     },
     {
-      title: "Age",
-      dataIndex: "age",
-      key: "age",
-    },
-    {
-      title: "Address",
-      dataIndex: "address",
-      key: "address",
-    },
-    {
-      title: "Tags",
-      key: "tags",
-      dataIndex: "tags",
-      render: (_, { tags }) => (
-        <>
-          {tags.map((tag) => {
-            let color = tag.length > 5 ? "geekblue" : "green";
-            if (tag === "loser") {
-              color = "volcano";
-            }
-            return (
-              <Tag color={color} key={tag}>
-                {tag.toUpperCase()}
-              </Tag>
-            );
-          })}
-        </>
-      ),
+      title: "Password",
+      dataIndex: "password",
+      key: "password",
     },
     {
       title: "Action",
@@ -105,12 +72,7 @@ const Employ_Manager: React.FC = () => {
 
   const handleEdit = (record: DataType) => {
     setEditingKey(record.key);
-    form.setFieldsValue({
-      name: record.name,
-      age: record.age,
-      address: record.address,
-      tags: record.tags,
-    });
+    form.setFieldsValue({ email: record.email, password: record.password });
     setIsModalVisible(true);
   };
 
@@ -143,7 +105,7 @@ const Employ_Manager: React.FC = () => {
       );
       setData(updatedData);
     } else {
-      const newKey = (data.length + 1).toString(); // Tạo key mới cho nhân viên
+      const newKey = (data.length + 1).toString(); // Tạo key mới cho tài khoản
       setData([...data, { ...values, key: newKey }]);
     }
     setIsModalVisible(false);
@@ -152,8 +114,12 @@ const Employ_Manager: React.FC = () => {
 
   return (
     <>
-      <Button type="primary" onClick={handleAdd} className="mb-4 ml-6 font-bold">
-        Add Employee
+      <Button
+        type="primary"
+        onClick={handleAdd}
+        className="mb-4 ml-6 font-bold"
+      >
+        Add Account
       </Button>
       <Table<DataType>
         columns={columns}
@@ -161,39 +127,25 @@ const Employ_Manager: React.FC = () => {
         pagination={{ pageSize: 2 }} // Giới hạn số dòng hiển thị mỗi trang là 2
       />
       <Modal
-        title={editingKey ? "Edit Employee" : "Add Employee"}
+        title={editingKey ? "Edit Account" : "Add Account"}
         visible={isModalVisible}
         onCancel={() => setIsModalVisible(false)}
         footer={null}
       >
         <Form form={form} onFinish={onFinish}>
           <Form.Item
-            name="name"
-            label="Name"
-            rules={[{ required: true, message: "Please input your name!" }]}
+            name="email"
+            label="Email"
+            rules={[{ required: true, message: "Please input your email!" }]}
           >
             <Input />
           </Form.Item>
           <Form.Item
-            name="age"
-            label="Age"
-            rules={[{ required: true, message: "Please input your age!" }]}
+            name="password"
+            label="Password"
+            rules={[{ required: true, message: "Please input your password!" }]}
           >
-            <Input />
-          </Form.Item>
-          <Form.Item
-            name="address"
-            label="Address"
-            rules={[{ required: true, message: "Please input your address!" }]}
-          >
-            <Input />
-          </Form.Item>
-          <Form.Item
-            name="tags"
-            label="Tags"
-            rules={[{ required: true, message: "Please input your tags!" }]}
-          >
-            <Input />
+            <Input.Password />
           </Form.Item>
           <Form.Item>
             <Button type="primary" htmlType="submit">
@@ -208,10 +160,10 @@ const Employ_Manager: React.FC = () => {
         onOk={confirmDelete}
         onCancel={cancelDelete}
       >
-        <p>Are you sure you want to delete this employee?</p>
+        <p>Are you sure you want to delete this account?</p>
       </Modal>
     </>
   );
 };
 
-export default Employ_Manager;
+export default Account_Manager;

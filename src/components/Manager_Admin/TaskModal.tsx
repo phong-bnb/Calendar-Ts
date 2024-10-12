@@ -1,33 +1,50 @@
 import { Button, Form, Input, Select } from "antd";
-import React from "react";
+import React, { useEffect } from "react";
+import { users } from "./user";
+import { Task } from "../../store"; // Import kiểu Task
 
 const { Option } = Select;
-
-const users = [
-  { name: "John", color: "red" },
-  { name: "Jane", color: "blue" },
-  { name: "Doe", color: "green" },
-];
 
 type FieldType = {
   content: string;
   title: string;
-  user: string;
+  user: {
+    name: string; // Thay đổi từ string sang đối tượng
+    color: string;
+  };
 };
 
 type TaskModalProps = {
-  onSave: (task: FieldType) => void;
+  onSave: (task: Omit<Task, "id" | "date">) => void; // Omit để không cần id và date
   onClose: () => void;
+  editingTask?:  Task | null// Sử dụng kiểu Task
 };
 
-const TaskModal: React.FC<TaskModalProps> = ({ onSave, onClose }) => {
+const TaskModal: React.FC<TaskModalProps> = ({
+  onSave,
+  onClose,
+  editingTask,
+}) => {
   const [form] = Form.useForm();
 
-  const onFinish = (values: FieldType) => {
-    onSave(values);
-    form.resetFields();
-    onClose();
-  };
+  useEffect(() => {
+    if (editingTask) {
+      form.setFieldsValue({
+        title: editingTask.title,
+        content: editingTask.content,
+        user: editingTask.user.name, // Chỉ lấy tên người dùng
+      });
+    } else {
+      form.resetFields();
+    }
+  }, [editingTask, form]);
+
+ const onFinish = (values: FieldType) => {
+   console.log("Task values submitted:", values); // Log giá trị form
+   onSave(values);
+   form.resetFields();
+   onClose();
+ };
 
   return (
     <Form
@@ -83,7 +100,7 @@ const TaskModal: React.FC<TaskModalProps> = ({ onSave, onClose }) => {
 
       <Form.Item wrapperCol={{ offset: 8, span: 16 }}>
         <Button type="primary" htmlType="submit">
-          Submit
+          {editingTask ? "Update" : "Submit"}
         </Button>
       </Form.Item>
     </Form>
