@@ -1,4 +1,5 @@
 import React from "react";
+import axios from "axios";
 import { message } from "antd";
 import { useNavigate } from "react-router-dom";
 
@@ -6,30 +7,30 @@ const LoginPage: React.FC = () => {
   const [messageApi, contextHolder] = message.useMessage();
   const navigate = useNavigate();
 
-  const success = () => {
+  const success = (msg: string) => {
     messageApi.open({
       type: "success",
-      content: "Login success",
+      content: msg,
     });
   };
 
-  const error = () => {
+  const error = (msg: string) => {
     messageApi.open({
       type: "error",
-      content: "Login fail",
+      content: msg,
     });
   };
 
   const [signUp, setSignUp] = React.useState<boolean>(false);
-  const email: string = "danh123@vn.vn";
-  const password: string = "123456";
 
   interface User {
+    name?: string;
     email: string;
     password: string;
   }
 
   const [user, setUser] = React.useState<User>({
+    name: "",
     email: "",
     password: "",
   });
@@ -42,13 +43,50 @@ const LoginPage: React.FC = () => {
     }));
   };
 
-  const Signin = (e: React.FormEvent<HTMLFormElement>) => {
+  const Signin = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    if (user.email === email && user.password === password) {
-      success();
-      navigate("/home");
-    } else {
-      error();
+
+    try {
+      const response = await axios.post("http://localhost:1337/login", {
+        email: user.email,
+        pass: user.password,
+      });
+
+      if (response.status === 200) {
+        localStorage.setItem("user", JSON.stringify(response.data));
+        success("Login success");
+        // navigate("/home");
+        window.location.reload();
+      }
+    } catch (err) {
+      if (axios.isAxiosError(err) && err.response) {
+        error(err.response.data.message || "Login failed");
+      } else {
+        error("An error occurred");
+      }
+    }
+  };
+
+  const Signup = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+
+    try {
+      const response = await axios.post("http://localhost:1337/register", {
+        name: user.name,
+        email: user.email,
+        pass: user.password,
+      });
+
+      if (response.status === 200) {
+        success("Registration successful!");
+        setSignUp(false); // Chuyển về giao diện đăng nhập sau khi đăng ký thành công
+      }
+    } catch (err) {
+      if (axios.isAxiosError(err) && err.response) {
+        error(err.response.data.message || "Registration failed");
+      } else {
+        error("An error occurred during registration");
+      }
     }
   };
 
@@ -71,22 +109,27 @@ const LoginPage: React.FC = () => {
             <h1 className="text-xl font-bold leading-tight tracking-tight text-gray-900 md:text-2xl dark:text-white">
               {signUp ? "Sign up for an account" : "Sign in to your account"}
             </h1>
-            <form className="space-y-4 md:space-y-6" onSubmit={Signin}>
+            <form
+              className="space-y-4 md:space-y-6"
+              onSubmit={signUp ? Signup : Signin}
+            >
               {signUp && (
                 <div>
                   <label
-                    htmlFor="username"
+                    htmlFor="name"
                     className="block mb-2 text-sm font-medium text-gray-900 dark:text-white"
                   >
-                    Username
+                    Name
                   </label>
                   <input
                     type="text"
-                    name="username"
-                    id="username"
+                    name="name"
+                    id="name"
                     className="bg-gray-50 border border-gray-300 text-gray-900 rounded-lg focus:ring-primary-600 focus:border-primary-600 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
-                    placeholder="Enter your username"
+                    placeholder="Enter your name"
                     required
+                    value={user.name}
+                    onChange={handleChange}
                   />
                 </div>
               )}
