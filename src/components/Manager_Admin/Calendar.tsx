@@ -1,10 +1,11 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Calendar, Modal } from "rsuite";
 import "rsuite/dist/rsuite.min.css"; // Style cho RSuite
+import axios from "axios"; // Import axios để fetch API
 import { useSelector, useDispatch } from "react-redux";
 import { deleteTask, setTasksForDay, RootState } from "../../store";
 import TaskModal from "./TaskModal";
-import { users } from "./user";
+// import { users } from "./user";
 import "./Calendar.css";
 import { Button } from "antd";
 import { Task } from "../../store"; // Import kiểu Task
@@ -12,23 +13,59 @@ import { Task } from "../../store"; // Import kiểu Task
 const Calendar_Manager: React.FC = () => {
   const dispatch = useDispatch();
   const tasks = useSelector((state: RootState) => state.calendar.tasks);
-
   const [modalVisible, setModalVisible] = useState(false);
   const [selectedDay, setSelectedDay] = useState<Date | null>(null);
   const [editingTask, setEditingTask] = useState<Task | null>(null); // Sử dụng kiểu Task ở đây
+  const [users, setUser] = useState<any[]>([]);
+  console.log(tasks);
 
+  useEffect(() => {
+    const fetchUserRoles = async () => {
+      try {
+        const response = await axios.get("http://localhost:1337/user-roles");
+        setUser(response.data); // Lưu kết quả vào state
+      } catch (error) {
+        console.error("Error fetching user roles:", error);
+      }
+    };
+
+    fetchUserRoles();
+  }, []);
+  // Fetch data từ Strapi khi component được mount
+  useEffect(() => {
+    const fetchTasks = async () => {
+      try {
+        const response = await axios.get("http://localhost:1337/tasks");
+        const strapiTasks = response.data.map((task: any) => ({
+          id: task.id,
+          title: task.title,
+          user: task.user_role?.name || "Unknown", // Lấy user từ user_role
+          date: task.date,
+          content: task.content,
+        }));
+        dispatch(setTasksForDay(strapiTasks)); // Dispatch tasks lên Redux store
+      } catch (error) {
+        console.error("Error fetching tasks:", error);
+      }
+    };
+    fetchTasks();
+  }, [dispatch]);
+
+  // Khi chọn một ngày trong calendar
   const handleSelectDay = (date: Date) => {
     setSelectedDay(date);
-    setEditingTask(null);
+    setEditingTask(null); // Reset task để chuẩn bị thêm mới
     setModalVisible(true);
   };
 
-  const handleSaveTask = (newTask: Omit<Task, "id" | "date">) => {
+  const handleSaveTask = async (newTask: Omit<Task, "id" | "date">) => {
+    console.log(users);
+
     if (selectedDay) {
-      const selectedUser = users.find((u) => u.name === newTask.user);
+      const selectedUser = users.find((u) => u.id === newTask.user); // Sửa lại để tìm user theo ID
 
       if (!selectedUser) {
-        console.error("User not found:", newTask.user); // Log ra nếu không tìm thấy user
+        console.error("User not found:", newTask.user);
         return;
       }
 
@@ -39,14 +76,37 @@ const Calendar_Manager: React.FC = () => {
       };
 
       if (editingTask) {
+        // Update task hiện có
         const updatedTasks = tasks.map((task) =>
-          task.title === editingTask.title && task.date === editingTask.date
-            ? taskWithDate
-            : task
+          task.id === editingTask.id ? { ...taskWithDate, id: task.id } : task
         );
-        dispatch(setTasksForDay(updatedTasks));
+
+        try {
+          await axios.put(`http://localhost:1337/tasks/${editingTask.id}`, {
+            title: newTask.title,
+            content: newTask.content,
+            date: selectedDay.toISOString(),
+            user_role: selectedUser.id,
+          });
+          dispatch(setTasksForDay(updatedTasks));
+        } catch (error) {
+          console.error("Error updating task:", error);
+        }
       } else {
-        dispatch(setTasksForDay([...tasks, taskWithDate]));
+        // Thêm task mới
+        try {
+          const response = await axios.post("http://localhost:1337/tasks", {
+            title: newTask.title,
+            content: newTask.content,
+            date: selectedDay.toISOString(),
+            user_role: selectedUser.id,
+          });
+
+          const newTaskWithId = { ...taskWithDate, id: response.data.id };
+          dispatch(setTasksForDay([...tasks, newTaskWithId]));
+        } catch (error) {
+          console.error("Error adding task:", error);
+        }
       }
     }
     setModalVisible(false);
@@ -58,8 +118,13 @@ const Calendar_Manager: React.FC = () => {
     setModalVisible(true);
   };
 
-  const handleDeleteTask = (date: string, title: string) => {
-    dispatch(deleteTask({ date, title }));
+  const handleDeleteTask = async (id: string) => {
+    try {
+      await axios.delete(`http://localhost:1337/tasks/${id}`);
+      dispatch(deleteTask({ id }));
+    } catch (error) {
+      console.error("Error deleting task:", error);
+    }
   };
 
   const renderCell = (date: Date) => {
@@ -84,17 +149,14 @@ const Calendar_Manager: React.FC = () => {
               return (
                 <div
                   key={task.id}
-                  className="text-black mb-1 flex  gap-2 w-full"
+                  className="text-black mb-1 flex gap-2 w-full"
                 >
                   <div className="flex justify-between  w-full">
                     <div className="flex items-center">
-                      {" "}
                       <span style={{ color: user?.color }}>{user?.name}</span>:
                       <span className="truncate max-w-[80%]">
-                        {" "}
-                        {/* Sử dụng truncate để ẩn overflow */}
                         {task.title.length > 5
-                          ? `${task.title.slice(0, 5)}...` //nếu title quá 5 kí tự thì ẩn và thêm ... đằng sau
+                          ? `${task.title.slice(0, 5)}...`
                           : task.title}
                       </span>
                     </div>
@@ -112,7 +174,7 @@ const Calendar_Manager: React.FC = () => {
                         className="w-auto"
                         onClick={(e) => {
                           e.stopPropagation();
-                          handleDeleteTask(task.date, task.title);
+                          handleDeleteTask(task.id);
                         }}
                       >
                         Delete
@@ -139,7 +201,7 @@ const Calendar_Manager: React.FC = () => {
       <div className="flex items-center mt-2 pl-8"></div>
 
       <div className="flex-grow flex mt-4">
-        <div className="bg-white p-8 rounded-lg shadow-lg w-full ">
+        <div className="bg-white p-8 rounded-lg shadow-lg w-full">
           <h1 className="text-2xl font-bold">Lịch công việc</h1>
           <Calendar
             bordered

@@ -59,7 +59,7 @@ const HomePage: React.FC = () => {
           style={{ width: 120 }}
           onChange={handleSelections}
           options={[
-            { value: "qlynv", label: "Manager Human" },
+            { value: "qlynv", label: "Manager group" },
             { value: "lich", label: "Calendars" },
             { value: "qlytk", label: "Manager Account" },
           ]}
