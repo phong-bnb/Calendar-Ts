@@ -1,42 +1,54 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Space, Table, Modal, Form, Input, Button } from "antd";
 import type { TableProps } from "antd";
 import { RiEditFill } from "react-icons/ri";
 import { MdDeleteForever } from "react-icons/md";
+import axios from "axios";
 
 interface DataType {
   key: string;
+  name: string;
   email: string;
   password: string;
 }
 
-const initialData: DataType[] = [
-  {
-    key: "1",
-    email: "luubinhngu@duonghai.com",
-    password: "123123",
-  },
-  {
-    key: "2",
-    email: "ducanhngu@haiduong.vn",
-    password: "123123",
-  },
-  {
-    key: "3",
-    email: "Namanngu@namdinh.vn",
-    password: "123123",
-  },
-];
-
-const Account_Manager: React.FC = () => {
-  const [data, setData] = useState<DataType[]>(initialData);
+const AccountManager: React.FC = () => {
+  const [data, setData] = useState<DataType[]>([]);
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [confirmDeleteVisible, setConfirmDeleteVisible] = useState(false);
   const [form] = Form.useForm();
   const [editingKey, setEditingKey] = useState<string | null>(null);
   const [deletingKey, setDeletingKey] = useState<string | null>(null);
 
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const response = await axios.get("http://localhost:1337/user-roles");
+        if (response.status === 200) {
+          const formattedData = response.data.map((item: any) => ({
+            key: item.id,
+            name: item.name,
+            email: item.email,
+            password: item.pass,
+          }));
+          setData(formattedData);
+          console.log(formattedData);
+        }
+      } catch (error) {
+        console.error("Error fetching data:", error);
+      }
+    };
+
+    fetchData();
+  }, []);
+
   const columns: TableProps<DataType>["columns"] = [
+    {
+      title: "Name",
+      dataIndex: "name",
+      key: "name",
+      render: (text) => <a>{text}</a>,
+    },
     {
       title: "Email",
       dataIndex: "email",
@@ -72,7 +84,11 @@ const Account_Manager: React.FC = () => {
 
   const handleEdit = (record: DataType) => {
     setEditingKey(record.key);
-    form.setFieldsValue({ email: record.email, password: record.password });
+    form.setFieldsValue({
+      name: record.name,
+      email: record.email,
+      password: record.password,
+    });
     setIsModalVisible(true);
   };
 
@@ -87,10 +103,16 @@ const Account_Manager: React.FC = () => {
     setConfirmDeleteVisible(true);
   };
 
-  const confirmDelete = () => {
-    setData(data.filter((item) => item.key !== deletingKey));
-    setConfirmDeleteVisible(false);
-    setDeletingKey(null);
+  const confirmDelete = async () => {
+    try {
+      await axios.delete(`http://localhost:1337/user-roles/${deletingKey}`);
+      setData(data.filter((item) => item.key !== deletingKey));
+    } catch (error) {
+      console.error("Error deleting account:", error);
+    } finally {
+      setConfirmDeleteVisible(false);
+      setDeletingKey(null);
+    }
   };
 
   const cancelDelete = () => {
@@ -98,16 +120,57 @@ const Account_Manager: React.FC = () => {
     setDeletingKey(null);
   };
 
-  const onFinish = (values: DataType) => {
-    if (editingKey) {
-      const updatedData = data.map((item) =>
-        item.key === editingKey ? { ...item, ...values } : item
-      );
-      setData(updatedData);
-    } else {
-      const newKey = (data.length + 1).toString(); // Tạo key mới cho tài khoản
-      setData([...data, { ...values, key: newKey }]);
+  const onFinish = async (values: DataType) => {
+    const emailExists = data.some((item) => item.email === values.email);
+
+    if (emailExists) {
+      Modal.error({
+        title: "Error",
+        content: "Email already exists!",
+      });
+      return;
     }
+
+    if (editingKey) {
+      try {
+        const response = await axios.put(
+          `http://localhost:1337/user-roles/${editingKey}`,
+          {
+            name: values.name,
+            email: values.email,
+            pass: values.password,
+          }
+        );
+        if (response.status === 200) {
+          const updatedData = data.map((item) =>
+            item.key === editingKey ? { ...item, ...values } : item
+          );
+          setData(updatedData);
+        }
+      } catch (error) {
+        console.error("Error updating account:", error);
+      }
+    } else {
+      try {
+        const response = await axios.post("http://localhost:1337/user-roles", {
+          name: values.name,
+          email: values.email,
+          pass: values.password,
+        });
+        if (response.status === 200 || response.status === 201) {
+          const newData = {
+            key: response.data.id,
+            name: values.name,
+            email: values.email,
+            password: values.password,
+          };
+          setData([...data, newData]);
+        }
+      } catch (error) {
+        console.error("Error adding account:", error);
+      }
+    }
+
     setIsModalVisible(false);
     setEditingKey(null);
   };
@@ -124,7 +187,7 @@ const Account_Manager: React.FC = () => {
       <Table<DataType>
         columns={columns}
         dataSource={data}
-        pagination={{ pageSize: 2 }} // Giới hạn số dòng hiển thị mỗi trang là 2
+        pagination={{ pageSize: 5 }} // Số lượng tài khoản hiển thị mỗi trang là 5
       />
       <Modal
         title={editingKey ? "Edit Account" : "Add Account"}
@@ -133,6 +196,13 @@ const Account_Manager: React.FC = () => {
         footer={null}
       >
         <Form form={form} onFinish={onFinish}>
+          <Form.Item
+            name="name"
+            label="Name"
+            rules={[{ required: true, message: "Please input the name!" }]}
+          >
+            <Input />
+          </Form.Item>
           <Form.Item
             name="email"
             label="Email"
@@ -166,4 +236,4 @@ const Account_Manager: React.FC = () => {
   );
 };
 
-export default Account_Manager;
+export default AccountManager;

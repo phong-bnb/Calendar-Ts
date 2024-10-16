@@ -152,13 +152,17 @@ const Employ_Manager: React.FC = () => {
 
   return (
     <>
-      <Button type="primary" onClick={handleAdd} className="mb-4 ml-6 font-bold">
+      <Button
+        type="primary"
+        onClick={handleAdd}
+        className="mb-4 ml-6 font-bold"
+      >
         Add Employee
       </Button>
       <Table<DataType>
         columns={columns}
         dataSource={data}
-        pagination={{ pageSize: 2 }} // Giới hạn số dòng hiển thị mỗi trang là 2
+        pagination={{ pageSize: 5 }} // Giới hạn số dòng hiển thị mỗi trang là 2
       />
       <Modal
         title={editingKey ? "Edit Employee" : "Add Employee"}
